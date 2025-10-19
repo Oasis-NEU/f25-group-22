@@ -22,17 +22,14 @@ def water_amount():
 
 def cal_amount():
     # Based on hike and user data, calculate recommended calorie intake
-    
     pass
 
 def clothing_recommendation():
     # Based on hike and user data, recommend clothing
-    
-    return clothing
+    pass
 
 def pack_weight():
-    
-
+    pass
 
 
 
@@ -57,5 +54,4 @@ def gear_recommendation():
         gear.append('Sunglasses')
     if(df_hike['Time'].max() > 6).any():
         gear.append('Headlamp')
-    
     return gear
