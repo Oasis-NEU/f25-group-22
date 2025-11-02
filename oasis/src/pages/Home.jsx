@@ -6,7 +6,6 @@ export default function Home() {
 
       {/* Hero Section */}
       <div style={{ background: "linear-gradient(135deg, rgba(46, 111, 64, 0.4) 0%, rgba(27, 77, 62, 0.4) 100%), url('https://pics.freeartbackgrounds.com/midle/Forest_Trail_Background-212.jpg')",
-        backgroundSize: "cover",
         backgroundPosition: "center",
         color: "white",
         padding: "80px 2rem",
@@ -26,7 +25,7 @@ export default function Home() {
           <div style={{ backgroundColor: "#f9f9f9", borderRadius: "8px", overflow: "hidden", boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)", cursor: "pointer" }}>
             <div style={{ width: "100%", height: "200px", backgroundColor: "#ddd" }}></div>
             <div style={{ padding: "1.5rem" }}>
-              <h3 style={{ color: "#2E6F40", marginBottom: "0.5rem", fontSize: "18px" }}>Mountain Peak Trail</h3>
+              <h3 style={{ color: "#2E6F40", marginBottom: "0.5rem", fontSize: "18px" }}>Rainbow Falls Trail</h3>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", color: "#666", marginTop: "1rem" }}>
                 <span>8.5 km</span>
                 <span>Moderate</span>
@@ -39,7 +38,7 @@ export default function Home() {
           <div style={{ backgroundColor: "#f9f9f9", borderRadius: "8px", overflow: "hidden", boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)", cursor: "pointer" }}>
             <div style={{ width: "100%", height: "200px", backgroundColor: "#ddd" }}></div>
             <div style={{ padding: "1.5rem" }}>
-              <h3 style={{ color: "#2E6F40", marginBottom: "0.5rem", fontSize: "18px" }}>Forest Loop Trail</h3>
+              <h3 style={{ color: "#2E6F40", marginBottom: "0.5rem", fontSize: "18px" }}>Glacier National Park</h3>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", color: "#666", marginTop: "1rem" }}>
                 <span>5.2 km</span>
                 <span>Easy</span>
@@ -52,7 +51,7 @@ export default function Home() {
           <div style={{ backgroundColor: "#f9f9f9", borderRadius: "8px", overflow: "hidden", boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)", cursor: "pointer" }}>
             <div style={{ width: "100%", height: "200px", backgroundColor: "#ddd" }}></div>
             <div style={{ padding: "1.5rem" }}>
-              <h3 style={{ color: "#2E6F40", marginBottom: "0.5rem", fontSize: "18px" }}>Riverside Path</h3>
+              <h3 style={{ color: "#2E6F40", marginBottom: "0.5rem", fontSize: "18px" }}>Rose River Trail</h3>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", color: "#666", marginTop: "1rem" }}>
                 <span>6.0 km</span>
                 <span>Easy</span>
