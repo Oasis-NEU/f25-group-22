@@ -1,11 +1,17 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Mountain, ArrowRight, Calendar, MapPin } from "lucide-react";
+import {
+  Mountain,
+  ArrowRight,
+  Calendar,
+  MapPin,
+  TrendingUp,
+} from "lucide-react";
 
 export default function Dashboard() {
   return (
-    <div className="min-h-screen p-15">
-      <div className="max-w-4xl">
+    <div className="min-h-screen p-18">
+      <div className="max-w-4xl ml-8">
         {/* Welcome Section */}
         <div className="mb-6">
           <p className="text-gray-500 text-sm">Welcome back</p>
@@ -24,11 +30,24 @@ export default function Dashboard() {
             hiking experience
           </p>
           <Link to="/planhike">
-            <button className="bg-white text-emerald-600 px-5 py-2 rounded-md flex items-center gap-2 hover:bg-gray-50 transition-colors text-sm">
+            <button className="bg-white text-emerald-600 px-5 py-2 rounded-md flex items-center gap-2 hover:bg-gray-50 transition-colors text-sm cursor-pointer">
               Start planning
               <ArrowRight className="w-4 h-4" />
             </button>
           </Link>
+        </div>
+
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-5 mb-6">
+          <h3 className="text-emerald-900 mb-3 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            Trail tips
+          </h3>
+          <div className="space-y-2 text-sm text-emerald-800">
+            <p>• Start early to avoid crowds and afternoon heat</p>
+            <p>• Check trail conditions and closures before you go</p>
+            <p>• Always tell someone your hiking plan</p>
+            <p>• Pack the 10 essentials for any day hike</p>
+          </div>
         </div>
 
         {/* Stats */}
