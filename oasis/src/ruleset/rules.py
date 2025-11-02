@@ -31,10 +31,8 @@ def clothing_recommendation():
     return clothing
 
 def pack_weight():
-    
 
-
-
+    pass
 
 
 
