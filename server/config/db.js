@@ -1,20 +1,12 @@
 import { Pool } from "pg";
+import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-let pool;
-try {
-  pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    database: process.env.DB_DATABASE,
-    password: process.env.DB_PASSWORD,
-  });
-  console.log("DB connected successfully");
-} catch (error) {
-  console.error("Error connecting to DB", error);
-}
+const supabaseUrl = "https://your-project.supabase.co";
+const supabaseKey = "your-anon-key";
 
-export default pool;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+export default supabase;
