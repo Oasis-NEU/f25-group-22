@@ -43,6 +43,8 @@ export default function PlanHike() {
     setShowResults(true);
   };
 
+  const handlePlanSubmit = () => {};
+
   const popularTrails = [
     { name: "Yosemite Falls", difficulty: "Moderate", distance: "7.2 mi" },
     { name: "Mount Tamalpais", difficulty: "Easy", distance: "4.5 mi" },
@@ -51,7 +53,7 @@ export default function PlanHike() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-18">
+    <div className="min-h-screen bg-gray-50 p-24">
       <div className="max-w-3xl ml-8">
         <div className="mb-8">
           <h1 className="text-4xl text-gray-900 mb-2">Plan a hike</h1>
@@ -217,12 +219,14 @@ export default function PlanHike() {
                 </select>
               </div>
 
-              <button
-                onClick={handleSubmit}
-                className="w-full bg-emerald-600 text-white py-4 rounded-lg hover:bg-emerald-700 transition-colors text-lg"
-              >
-                Get my packing list
-              </button>
+              {!showResults && (
+                <button
+                  onClick={handleSubmit}
+                  className="w-full bg-emerald-600 text-white py-4 rounded-lg hover:bg-emerald-700 transition-colors text-lg"
+                >
+                  Get my packing list
+                </button>
+              )}
             </div>
           )}
 
@@ -306,6 +310,14 @@ export default function PlanHike() {
             </div>
           )}
         </div>
+        {showResults && (
+          <button
+            onClick={handlePlanSubmit}
+            className="w-full bg-emerald-600 text-white py-4 rounded-lg hover:bg-emerald-700 transition-colors text-lg mt-10"
+          >
+            Plan my hike!
+          </button>
+        )}
       </div>
     </div>
   );

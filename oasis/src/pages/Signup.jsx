@@ -1,14 +1,18 @@
 import React, { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import useAuth from "../hooks/useAuth";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+  const { signUp } = useAuth();
+  const navigate = useNavigate();
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -17,8 +21,35 @@ export default function SignUp() {
     });
   };
 
-  const handleSubmit = () => {
-    console.log("Sign up attempt:", formData);
+  const handleSubmit = async () => {
+    setError("");
+    setLoading(true);
+
+    // Validation
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match!");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long!");
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await signUp(formData.email, formData.password);
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else {
+      setSuccess(true);
+      setLoading(false);
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 2000);
+    }
   };
 
   return (
@@ -33,45 +64,21 @@ export default function SignUp() {
           </p>
         </div>
 
-        <div className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="firstName"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                First name
-              </label>
-              <input
-                id="firstName"
-                name="firstName"
-                type="text"
-                value={formData.firstName}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 focus:border-transparent outline-none transition"
-                placeholder="John"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="lastName"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Last name
-              </label>
-              <input
-                id="lastName"
-                name="lastName"
-                type="text"
-                value={formData.lastName}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 focus:border-transparent outline-none transition"
-                placeholder="Doe"
-              />
-            </div>
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+            {error}
           </div>
+        )}
 
+        {/* Success Message */}
+        {success && (
+          <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
+            Account created successfully! Redirecting...
+          </div>
+        )}
+
+        <div className="space-y-5">
           <div>
             <label
               htmlFor="email"
@@ -85,7 +92,8 @@ export default function SignUp() {
               type="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 focus:border-transparent outline-none transition"
+              disabled={loading || success}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 focus:border-transparent outline-none transition disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="you@example.com"
             />
           </div>
@@ -103,7 +111,8 @@ export default function SignUp() {
               type="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 focus:border-transparent outline-none transition"
+              disabled={loading || success}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 focus:border-transparent outline-none transition disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="Create a password"
             />
           </div>
@@ -121,41 +130,19 @@ export default function SignUp() {
               type="password"
               value={formData.confirmPassword}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 focus:border-transparent outline-none transition"
+              disabled={loading || success}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 focus:border-transparent outline-none transition disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="Confirm your password"
             />
-          </div>
-
-          <div className="flex items-start">
-            <input
-              id="terms"
-              type="checkbox"
-              className="h-4 w-4 mt-1 text-green-700 border-gray-300 rounded focus:ring-green-700"
-            />
-            <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
-              I agree to the{" "}
-              <a
-                href="#"
-                className="text-green-700 hover:text-green-800 font-medium"
-              >
-                Terms and Conditions
-              </a>{" "}
-              and{" "}
-              <a
-                href="#"
-                className="text-green-700 hover:text-green-800 font-medium"
-              >
-                Privacy Policy
-              </a>
-            </label>
           </div>
 
           <button
             style={{ backgroundColor: "#2E6F40" }}
             onClick={handleSubmit}
-            className="w-full text-white py-3 rounded-lg font-medium hover:bg-green-800 transition-colors shadow-sm cursor-pointer"
+            disabled={loading || success}
+            className="w-full text-white py-3 rounded-lg font-medium hover:bg-green-800 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Create account
+            {loading ? "Creating account..." : "Create account"}
           </button>
         </div>
 
@@ -163,12 +150,9 @@ export default function SignUp() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
-              <a
-                href="#"
-                className="font-medium text-green-700 hover:text-green-800"
-              >
+              <span className="font-medium text-green-700 hover:text-green-800">
                 Log in
-              </a>
+              </span>
             </p>
           </div>
         </Link>
