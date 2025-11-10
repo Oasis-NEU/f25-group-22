@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { MapPin, TrendingUp, Clock, Mountain, Star } from 'lucide-react';
+import React, { useState } from "react";
+import { MapPin, TrendingUp, Clock, Mountain, Star } from "lucide-react";
 
 export default function RecommendedTrails() {
-  const [selectedDifficulty, setSelectedDifficulty] = useState('all');
-  const [selectedLength, setSelectedLength] = useState('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState("all");
+  const [selectedLength, setSelectedLength] = useState("all");
 
   // Placeholder trail data
   const trails = [
@@ -18,8 +18,9 @@ export default function RecommendedTrails() {
       rating: 4.7,
       reviews: 342,
       image: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800",
-      description: "A scenic mountain trail with panoramic views at the summit. Perfect for intermediate hikers.",
-      features: ["Waterfall", "Wildlife", "Photo spots"]
+      description:
+        "A scenic mountain trail with panoramic views at the summit. Perfect for intermediate hikers.",
+      features: ["Waterfall", "Wildlife", "Photo spots"],
     },
     {
       id: 2,
@@ -31,9 +32,11 @@ export default function RecommendedTrails() {
       duration: "1-2 hours",
       rating: 4.5,
       reviews: 567,
-      image: "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=800",
-      description: "A gentle path following the scenic river with multiple rest areas and picnic spots.",
-      features: ["Family friendly", "Dogs allowed", "Paved"]
+      image:
+        "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=800",
+      description:
+        "A gentle path following the scenic river with multiple rest areas and picnic spots.",
+      features: ["Family friendly", "Dogs allowed", "Paved"],
     },
     {
       id: 3,
@@ -45,9 +48,11 @@ export default function RecommendedTrails() {
       duration: "6-8 hours",
       rating: 4.9,
       reviews: 189,
-      image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800",
-      description: "An intense alpine experience with rocky terrain and breathtaking summit views.",
-      features: ["Peak bagging", "Alpine zone", "Challenging"]
+      image:
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800",
+      description:
+        "An intense alpine experience with rocky terrain and breathtaking summit views.",
+      features: ["Peak bagging", "Alpine zone", "Challenging"],
     },
     {
       id: 4,
@@ -59,9 +64,11 @@ export default function RecommendedTrails() {
       duration: "1.5-2 hours",
       rating: 4.6,
       reviews: 423,
-      image: "https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=800",
-      description: "A peaceful woodland walk through dense forest with occasional ocean glimpses.",
-      features: ["Shade", "Nature sounds", "Beginner friendly"]
+      image:
+        "https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=800",
+      description:
+        "A peaceful woodland walk through dense forest with occasional ocean glimpses.",
+      features: ["Shade", "Nature sounds", "Beginner friendly"],
     },
     {
       id: 5,
@@ -73,9 +80,11 @@ export default function RecommendedTrails() {
       duration: "2.5-3 hours",
       rating: 4.8,
       reviews: 298,
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
-      description: "Follow cascading streams through lush terrain to a spectacular 60-foot waterfall.",
-      features: ["Waterfall", "Swimming hole", "Photography"]
+      image:
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
+      description:
+        "Follow cascading streams through lush terrain to a spectacular 60-foot waterfall.",
+      features: ["Waterfall", "Swimming hole", "Photography"],
     },
     {
       id: 6,
@@ -87,39 +96,43 @@ export default function RecommendedTrails() {
       duration: "2 hours",
       rating: 4.4,
       reviews: 512,
-      image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800",
-      description: "Stunning ocean vistas along dramatic coastal cliffs with beach access points.",
-      features: ["Ocean views", "Beach access", "Sunset spot"]
-    }
+      image:
+        "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800",
+      description:
+        "Stunning ocean vistas along dramatic coastal cliffs with beach access points.",
+      features: ["Ocean views", "Beach access", "Sunset spot"],
+    },
   ];
 
   const difficultyColors = {
     Easy: "bg-green-100 text-green-800",
     Moderate: "bg-yellow-100 text-yellow-800",
-    Hard: "bg-red-100 text-red-800"
+    Hard: "bg-red-100 text-red-800",
   };
 
-  const filteredTrails = trails.filter(trail => {
-    const difficultyMatch = selectedDifficulty === 'all' || trail.difficulty === selectedDifficulty;
-    const lengthMatch = selectedLength === 'all' || 
-      (selectedLength === 'short' && trail.length < 4) ||
-      (selectedLength === 'medium' && trail.length >= 4 && trail.length <= 7) ||
-      (selectedLength === 'long' && trail.length > 7);
+  const filteredTrails = trails.filter((trail) => {
+    const difficultyMatch =
+      selectedDifficulty === "all" || trail.difficulty === selectedDifficulty;
+    const lengthMatch =
+      selectedLength === "all" ||
+      (selectedLength === "short" && trail.length < 4) ||
+      (selectedLength === "medium" && trail.length >= 4 && trail.length <= 7) ||
+      (selectedLength === "long" && trail.length > 7);
     return difficultyMatch && lengthMatch;
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 pl-64">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 pl-16">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white py-16 px-4">
+      <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white py-16 px-4 pl-20">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
             <TrendingUp className="w-8 h-8" />
-            <h1 className="text-4xl font-bold">Recommended Trails</h1>
+            <h1 className="text-4xl">Recommended Trails</h1>
           </div>
           <p className="text-green-100 text-lg max-w-2xl">
-            Discover the best hiking trails curated based on popularity, scenic beauty, and trail conditions. 
-            Find your next adventure!
+            Discover the best hiking trails curated based on popularity, scenic
+            beauty, and trail conditions. Find your next adventure!
           </p>
         </div>
       </div>
@@ -165,7 +178,11 @@ export default function RecommendedTrails() {
         {/* Results Count */}
         <div className="mb-6">
           <p className="text-gray-600">
-            Showing <span className="font-semibold text-gray-900">{filteredTrails.length}</span> recommended trails
+            Showing{" "}
+            <span className="font-semibold text-gray-900">
+              {filteredTrails.length}
+            </span>{" "}
+            recommended trails
           </p>
         </div>
 
@@ -183,15 +200,21 @@ export default function RecommendedTrails() {
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute top-4 right-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${difficultyColors[trail.difficulty]}`}>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      difficultyColors[trail.difficulty]
+                    }`}
+                  >
                     {trail.difficulty}
                   </span>
                 </div>
               </div>
 
               <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{trail.name}</h3>
-                
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  {trail.name}
+                </h3>
+
                 <div className="flex items-center text-gray-600 mb-3">
                   <MapPin className="w-4 h-4 mr-1" />
                   <span className="text-sm">{trail.location}</span>
@@ -199,11 +222,17 @@ export default function RecommendedTrails() {
 
                 <div className="flex items-center gap-1 mb-4">
                   <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                  <span className="font-semibold text-gray-900">{trail.rating}</span>
-                  <span className="text-gray-600 text-sm">({trail.reviews} reviews)</span>
+                  <span className="font-semibold text-gray-900">
+                    {trail.rating}
+                  </span>
+                  <span className="text-gray-600 text-sm">
+                    ({trail.reviews} reviews)
+                  </span>
                 </div>
 
-                <p className="text-gray-600 text-sm mb-4">{trail.description}</p>
+                <p className="text-gray-600 text-sm mb-4">
+                  {trail.description}
+                </p>
 
                 <div className="grid grid-cols-3 gap-4 mb-4 py-4 border-y border-gray-200">
                   <div className="text-center">
@@ -211,21 +240,27 @@ export default function RecommendedTrails() {
                       <Mountain className="w-4 h-4 text-gray-500" />
                     </div>
                     <div className="text-xs text-gray-500">Distance</div>
-                    <div className="font-semibold text-gray-900">{trail.length} mi</div>
+                    <div className="font-semibold text-gray-900">
+                      {trail.length} mi
+                    </div>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center mb-1">
                       <TrendingUp className="w-4 h-4 text-gray-500" />
                     </div>
                     <div className="text-xs text-gray-500">Elevation</div>
-                    <div className="font-semibold text-gray-900">{trail.elevation} ft</div>
+                    <div className="font-semibold text-gray-900">
+                      {trail.elevation} ft
+                    </div>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center mb-1">
                       <Clock className="w-4 h-4 text-gray-500" />
                     </div>
                     <div className="text-xs text-gray-500">Duration</div>
-                    <div className="font-semibold text-gray-900 text-xs">{trail.duration}</div>
+                    <div className="font-semibold text-gray-900 text-xs">
+                      {trail.duration}
+                    </div>
                   </div>
                 </div>
 
@@ -252,8 +287,12 @@ export default function RecommendedTrails() {
         {filteredTrails.length === 0 && (
           <div className="text-center py-12">
             <Mountain className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">No trails found</h3>
-            <p className="text-gray-600">Try adjusting your filters to see more results.</p>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">
+              No trails found
+            </h3>
+            <p className="text-gray-600">
+              Try adjusting your filters to see more results.
+            </p>
           </div>
         )}
       </div>

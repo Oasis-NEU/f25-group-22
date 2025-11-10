@@ -10,12 +10,11 @@ import {
 
 export default function Dashboard() {
   return (
-    <div className="min-h-screen p-18">
+    <div className="min-h-screen p-24">
       <div className="max-w-4xl ml-8">
         {/* Welcome Section */}
         <div className="mb-6">
-          <p className="text-gray-500 text-sm">Welcome back</p>
-          <h1 className="text-3xl text-gray-900">Hey Alex</h1>
+          <h1 className="text-3xl text-gray-900">Welcome back! </h1>
         </div>
 
         {/* CTA Section */}
