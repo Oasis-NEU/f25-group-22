@@ -794,9 +794,6 @@ def generate_safety_notes(df_hike, df_weather, difficulty_rating):
 
 
 
-
-
-
 def gear_recommendation():
     # Based on hike and user data, recommend gear
     gear = []

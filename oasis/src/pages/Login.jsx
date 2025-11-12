@@ -1,12 +1,32 @@
 import React, { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import useAuth from "../hooks/useAuth";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const { signIn } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = () => {
-    console.log("Login attempt:", { email, password });
+  const handleSubmit = async () => {
+    setLoading(true);
+    setError("");
+
+    const { error } = await signIn(email, password);
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else {
+      setSuccess(true);
+      setLoading(false);
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
+    }
   };
 
   return (
@@ -18,6 +38,20 @@ export default function Login() {
             Sign in to continue your adventure
           </p>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        {/* Success Message */}
+        {success && (
+          <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
+            Login successful! Redirecting...
+          </div>
+        )}
 
         <div className="space-y-6">
           <div>
@@ -32,7 +66,8 @@ export default function Login() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 focus:border-transparent outline-none transition"
+              disabled={loading || success}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 focus:border-transparent outline-none transition disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="you@example.com"
             />
           </div>
@@ -49,40 +84,19 @@ export default function Login() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 focus:border-transparent outline-none transition"
+              disabled={loading || success}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 focus:border-transparent outline-none transition disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="Enter your password"
             />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-green-700 border-gray-300 rounded focus:ring-green-700"
-              />
-              <label
-                htmlFor="remember-me"
-                className="ml-2 block text-sm text-gray-700"
-              >
-                Remember me
-              </label>
-            </div>
-
-            <a
-              href="#"
-              className="text-sm font-medium text-green-700 hover:text-green-800"
-            >
-              Forgot password?
-            </a>
           </div>
 
           <button
             style={{ backgroundColor: "#2E6F40" }}
             onClick={handleSubmit}
-            className="w-full text-white py-3 rounded-lg font-medium hover:bg-green-800 transition-colors shadow-sm cursor-pointer"
+            disabled={loading || success}
+            className="w-full text-white py-3 rounded-lg font-medium hover:bg-green-800 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Sign in
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </div>
 
@@ -90,12 +104,9 @@ export default function Login() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
-              <a
-                href="#"
-                className="font-medium text-green-700 hover:text-green-800"
-              >
+              <span className="font-medium text-green-700 hover:text-green-800">
                 Sign up
-              </a>
+              </span>
             </p>
           </div>
         </Link>
