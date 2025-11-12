@@ -71,7 +71,8 @@ def parse_trail_characteristics(df_hike):
             remoteness = 'high'
     
     bear_states = ['Alaska', 'Montana', 'Wyoming', 'Idaho', 'Colorado', 'Washington', 
-                   'California', 'Oregon', 'Arizona', 'New Mexico']
+                   'California', 'Oregon', 'Arizona', 'New Mexico', 'Utah', 'Vermont', 'New Hampshire',
+                   'Maine', 'Minnesota', 'Wisconsin', 'Michigan', 'New York', 'Pennsylvania']
     state = df_hike['state_name'].values[0]
     bear_country = state in bear_states
     
@@ -92,7 +93,7 @@ def calculate_difficulty_score(distance_miles, elevation_gain_ft, terrain_type='
                                temperature_f=70, altitude_ft=0, has_river=False, 
                                has_scrambling=False, is_winter=False):
     """
-    Calculate comprehensive difficulty score using Shenandoah formula.
+    Calculate comprehensive difficulty score.
     Returns dictionary with score, rating (1-7), and level description.
     """
     base_score = np.sqrt((elevation_gain_ft * 2) * distance_miles)
@@ -148,7 +149,6 @@ def calculate_difficulty_score(distance_miles, elevation_gain_ft, terrain_type='
 def water_amount(df_hike, df_user, df_weather):
     """
     Calculate recommended water amount in liters.
-    Formula: time-based consumption + elevation adjustment + environmental multipliers.
     """
     trail = parse_trail_characteristics(df_hike)
     distance = trail['distance_miles']
@@ -314,7 +314,7 @@ def gear_recommendations(df_hike, df_user, df_weather):
     terrain = trail['terrain_type']
     
     state = df_hike['state_name'].values[0]
-    altitude = get_altitude_estimate(state)
+    altitude = df_hike['altitude_ft'].values[0]
     
     temp = df_weather['temperature_f'].values[0]
     forecast = df_weather['forecast'].values[0]
