@@ -14,7 +14,25 @@ export default function RecommendedTrails() {
   const [states, setStates] = useState([]);
   const [activities, setActivities] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const itemsPerPage = 100;
+
+  const carouselImages = [
+    "https://www.travelandleisure.com/thmb/O9be9O1akR-H0wsuGJW64p6fVbs=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/19-mount-rainier-national-park-washington-BESTHIKE0407-1b2ae69a788f49a996e64ff38f05275a.jpg",
+    "https://www.thprd.org/imagelibrary/images/parks/fctrail.jpg",
+    "https://magazine.northeast.aaa.com/wp-content/uploads/2020/05/walking-trails-near-me-4.jpg?w=640",
+    "https://www.travelandleisure.com/thmb/75m6J3ZRnAMaUacNC_XqN3Vxu8I=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/20-shenandoah-national-park-virginia-BESTHIKE0407-99fb4086ffe44441928bb28a33583dca.jpg",
+    "https://www.travelandleisure.com/thmb/jQN6RAIXdc28jQQcH4ysE2RpSpY=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/TAL-bryce-canyon-BESTHIKE0524-e61d5a062d9040a9bf137c955522b10a.jpg",
+    "https://www.travelandleisure.com/thmb/wPueYjtO7j5q3ED5vMdYQTxVbLw=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/4-zion-national-park-utah-BESTHIKE0407-59e2046c784b4c4b9ff7da56a01361bc.jpg",
+
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % carouselImages.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     fetchTrails();
@@ -179,6 +197,15 @@ export default function RecommendedTrails() {
             beauty, and trail conditions. Find your next adventure!
           </p>
         </div>
+      </div>
+
+      {/* Image Carousel */}
+      <div className="w-full h-110 bg-gray-300 overflow-hidden shadow-lg border-4 border-green-600">
+        <img
+          src={carouselImages[currentImageIndex]}
+          alt="Trail carousel"
+          className="w-full h-full object-cover transition-opacity duration-1000"
+        />
       </div>
 
       {/* Filter Section */}
