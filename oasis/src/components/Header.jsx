@@ -29,13 +29,12 @@ export default function Header() {
               </button>
             </Link>
 
-            <Link to="signup">
+            <Link to="/signup">
               <button
                 style={{ backgroundColor: "#2E6F40",
                   fontFamily: "'Cabin', sans-serif"
                 }}
-                className="px-5 py-2 text-white rounded-lg font-medium transition-colors shadow-sm cursor-pointer"
-              >
+                className="px-5 py-2 text-white rounded-lg font-medium transition-colors shadow-sm cursor-pointer">
                 Sign Up
               </button>
             </Link>
