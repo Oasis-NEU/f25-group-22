@@ -1,108 +1,96 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MapPin, TrendingUp, Clock, Mountain, Star } from "lucide-react";
+import Papa from "papaparse";
+import TrailDetails from './TrailDetails';
 
 export default function RecommendedTrails() {
   const [selectedDifficulty, setSelectedDifficulty] = useState("all");
   const [selectedLength, setSelectedLength] = useState("all");
+  const [trails, setTrails] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTrail, setSelectedTrail] = useState(null);
 
-  // Placeholder trail data
-  const trails = [
-    {
-      id: 1,
-      name: "Eagle Peak Trail",
-      location: "White Mountains, NH",
-      difficulty: "Moderate",
-      length: 6.2,
-      elevation: 1450,
-      duration: "3-4 hours",
-      rating: 4.7,
-      reviews: 342,
-      image: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800",
-      description:
-        "A scenic mountain trail with panoramic views at the summit. Perfect for intermediate hikers.",
-      features: ["Waterfall", "Wildlife", "Photo spots"],
-    },
-    {
-      id: 2,
-      name: "Riverside Loop",
-      location: "Green Valley Park, MA",
-      difficulty: "Easy",
-      length: 2.8,
-      elevation: 250,
-      duration: "1-2 hours",
-      rating: 4.5,
-      reviews: 567,
-      image:
-        "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=800",
-      description:
-        "A gentle path following the scenic river with multiple rest areas and picnic spots.",
-      features: ["Family friendly", "Dogs allowed", "Paved"],
-    },
-    {
-      id: 3,
-      name: "Summit Ridge Challenge",
-      location: "Mount Washington, NH",
-      difficulty: "Hard",
-      length: 11.5,
-      elevation: 3200,
-      duration: "6-8 hours",
-      rating: 4.9,
-      reviews: 189,
-      image:
-        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800",
-      description:
-        "An intense alpine experience with rocky terrain and breathtaking summit views.",
-      features: ["Peak bagging", "Alpine zone", "Challenging"],
-    },
-    {
-      id: 4,
-      name: "Forest Haven Trail",
-      location: "Acadia National Park, ME",
-      difficulty: "Easy",
-      length: 3.5,
-      elevation: 420,
-      duration: "1.5-2 hours",
-      rating: 4.6,
-      reviews: 423,
-      image:
-        "https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=800",
-      description:
-        "A peaceful woodland walk through dense forest with occasional ocean glimpses.",
-      features: ["Shade", "Nature sounds", "Beginner friendly"],
-    },
-    {
-      id: 5,
-      name: "Cascade Falls Adventure",
-      location: "Berkshires, MA",
-      difficulty: "Moderate",
-      length: 5.3,
-      elevation: 890,
-      duration: "2.5-3 hours",
-      rating: 4.8,
-      reviews: 298,
-      image:
-        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
-      description:
-        "Follow cascading streams through lush terrain to a spectacular 60-foot waterfall.",
-      features: ["Waterfall", "Swimming hole", "Photography"],
-    },
-    {
-      id: 6,
-      name: "Coastal Bluffs Path",
-      location: "Cape Cod, MA",
-      difficulty: "Easy",
-      length: 4.1,
-      elevation: 180,
-      duration: "2 hours",
-      rating: 4.4,
-      reviews: 512,
-      image:
-        "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800",
-      description:
-        "Stunning ocean vistas along dramatic coastal cliffs with beach access points.",
-      features: ["Ocean views", "Beach access", "Sunset spot"],
-    },
-  ];
+  useEffect(() => {
+    // Import the CSV file
+     fetch('/alltrails-data.csv')
+      .then(response => response.text())
+      .then(csvText => {
+        Papa.parse(csvText, {
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            // Transform CSV data to match your component's format
+            const transformedTrails = results.data.map((row, index) => ({
+              id: index + 1,
+              name: row.name || 'Unknown Trail',
+              location: `${row.area_name || ''}, ${row.state_name || ''}`.trim(),
+              difficulty: getDifficultyFromRating(row.difficulty_rating),
+              difficulty_rating: row.difficulty_rating || 3,
+              length: row.length ? (row.length / 1609.34).toFixed(1) : 0, // Convert meters to miles
+              elevation: row.elevation_gain ? Math.round(row.elevation_gain * 3.28084) : 0, // Convert meters to feet
+              duration: estimateDuration(row.length, row.elevation_gain),
+              rating: row.avg_rating || 0,
+              reviews: row.num_reviews || 0,
+              image: getTrailImagePath(row.name) || row.profile_photo_url || `https://source.unsplash.com/800x600/?${encodeURIComponent(row.area_name || 'mountain,hiking')},trail,nature`,
+              features: parseFeatures(row.features),
+              area_name: row.area_name || '',
+              state_name: row.state_name || '',
+              visitor_usage: row.visitor_usage || 2,
+              altitude_ft: row.elevation_gain ? Math.round(row.elevation_gain * 3.28084) : 0
+            }));
+            setTrails(transformedTrails);
+            setLoading(false);
+          },
+          error: (error) => {
+            console.error('Error parsing CSV:', error);
+            setLoading(false);
+          }
+        });
+      })
+      .catch(error => {
+        console.error('Error loading CSV:', error);
+        setLoading(false);
+      });
+  }, []);
+
+  // Helper function to convert difficulty rating (1-7) to Easy/Moderate/Hard
+  const getDifficultyFromRating = (rating) => {
+    if (rating <= 2) return "Easy";
+    if (rating <= 5) return "Moderate";
+    return "Hard";
+  };
+
+  // Helper function to estimate duration based on length and elevation
+  const estimateDuration = (lengthMeters, elevationMeters) => {
+    if (!lengthMeters) return "Unknown";
+    const miles = lengthMeters / 1609.34;
+    const elevFeet = elevationMeters ? elevationMeters * 3.28084 : 0;
+    const hours = Math.round((miles / 2) + (elevFeet / 1000));
+    if (hours < 2) return "1-2 hours";
+    if (hours < 4) return `${hours}-${hours + 1} hours`;
+    return `${hours}+ hours`;
+  };
+
+  // Helper function to parse features from the CSV format
+  const parseFeatures = (featuresStr) => {
+    if (!featuresStr) return [];
+    try {
+      // Remove brackets and quotes, split by comma
+      const cleaned = featuresStr.replace(/[\[\]']/g, '');
+      return cleaned.split(',').slice(0, 3).map(f => 
+        f.trim().replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+      );
+    } catch {
+      return [];
+    }
+  };
+
+  const getTrailImagePath = (trailName) => {
+    if (!trailName) return null;
+    return `/images/trails/${trailName}.jpg`;
+  };
+
 
   const difficultyColors = {
     Easy: "bg-green-100 text-green-800",
@@ -120,6 +108,18 @@ export default function RecommendedTrails() {
       (selectedLength === "long" && trail.length > 7);
     return difficultyMatch && lengthMatch;
   });
+
+    if (selectedTrail) {
+    return <TrailDetails trail={selectedTrail} onBack={() => setSelectedTrail(null)} />;
+    }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 pl-16 flex items-center justify-center">
+        <div className="text-xl text-gray-600">Loading trails...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 pl-16">
@@ -275,8 +275,11 @@ export default function RecommendedTrails() {
                   ))}
                 </div>
 
-                <button className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors duration-200">
-                  View Trail Details
+                <button 
+                  onClick={() => setSelectedTrail(trail)}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors duration-200"
+                  >
+                    View Trail Details
                 </button>
               </div>
             </div>
