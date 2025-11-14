@@ -347,14 +347,13 @@ export default function TrailDetails({ trail: rawTrail, onBack }) {
     else if (timeHours < 8) packSize = "20-30L daypack";
     else if (timeHours < 16) packSize = "40-50L backpack";
     else packSize = "50-70L backpack";
-    
-    if (trailChar.difficultyRating >= 3) {
-      gear.terrainSpecific.push('Trekking poles (recommended)', 'Hiking boots with ankle support');
-    }
-    
+
     if (trailChar.difficultyRating >= 5) {
       gear.terrainSpecific.push('Trekking poles (essential)', 'Technical hiking boots', 'Emergency bivvy');
       gear.safety.push('GPS with preloaded route', 'Personal Locator Beacon (recommended)');
+    }
+    else if (trailChar.difficultyRating >= 3) {
+      gear.terrainSpecific.push('Trekking poles (recommended)', 'Hiking boots with ankle support');
     }
     
     if (trailChar.difficultyRating <= 2) {
