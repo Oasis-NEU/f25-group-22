@@ -47,7 +47,8 @@ export default function TrailDetails({ trail: rawTrail, onBack }) {
     age: 30,
     height_inches: 68,
     pack_weight_lbs: 10,
-    experience: "intermediate"
+    experience: "intermediate",
+    hike_date: new Date().toISOString().split('T')[0] // Today's date as default
   });
   
   // Weather inputs - will be fetched based on location
@@ -61,48 +62,67 @@ export default function TrailDetails({ trail: rawTrail, onBack }) {
   
   const [recommendations, setRecommendations] = useState(null);
 
-  // Fetch weather data based on trail location
+  // Fetch weather data based on trail location and date
   useEffect(() => {
-    if (trail.state_name || trail.area_name) {
+    if ((trail.state_name || trail.area_name) && userInputs.hike_date) {
       fetchWeatherData();
     }
-  }, [trail.state_name, trail.area_name]);
+  }, [trail.state_name, trail.area_name, userInputs.hike_date]);
 
   const fetchWeatherData = () => {
     setWeatherLoading(true);
-    // Mock weather data based on location
+    // Mock weather data based on location and date
     setTimeout(() => {
-      const mockWeather = generateMockWeather(trail.state_name, trail.area_name);
+      const mockWeather = generateMockWeather(trail.state_name, trail.area_name, userInputs.hike_date);
       setWeatherInputs(mockWeather);
       setWeatherLoading(false);
     }, 500);
   };
 
-  const generateMockWeather = (state, area) => {
-    const currentMonth = new Date().getMonth();
+  const generateMockWeather = (state, area, dateString) => {
+    // Parse the selected date
+    const selectedDate = new Date(dateString);
+    const month = selectedDate.getMonth();
+    
+    // Determine season based on selected date
     let season = 'summer';
-    if (currentMonth >= 2 && currentMonth <= 4) season = 'spring';
-    else if (currentMonth >= 5 && currentMonth <= 8) season = 'summer';
-    else if (currentMonth >= 9 && currentMonth <= 10) season = 'fall';
+    if (month >= 2 && month <= 4) season = 'spring';
+    else if (month >= 5 && month <= 8) season = 'summer';
+    else if (month >= 9 && month <= 10) season = 'fall';
     else season = 'winter';
 
+    // Base temperature by season
     let temp = 70;
-    if (season === 'winter') temp = 45;
-    else if (season === 'spring') temp = 60;
+    if (season === 'winter') temp = 35;
+    else if (season === 'spring') temp = 55;
     else if (season === 'summer') temp = 75;
-    else temp = 55;
+    else temp = 50;
 
+    // Adjust for specific states
     const coldStates = ['Alaska', 'Montana', 'Wyoming', 'Vermont', 'Maine', 'New Hampshire'];
     const hotStates = ['Arizona', 'Nevada', 'New Mexico', 'Texas', 'Florida'];
     
-    if (coldStates.includes(state)) temp -= 15;
-    if (hotStates.includes(state)) temp += 15;
+    if (coldStates.includes(state)) temp -= 20;
+    if (hotStates.includes(state)) temp += 20;
+
+    // Add some randomness for realism
+    temp += Math.floor(Math.random() * 10) - 5;
+
+    // Precipitation likelihood by season
+    let forecast = 'clear';
+    if (season === 'winter') {
+      forecast = Math.random() > 0.6 ? 'snow' : 'cloudy';
+    } else if (season === 'spring') {
+      forecast = Math.random() > 0.5 ? 'rain' : 'cloudy';
+    } else if (season === 'fall') {
+      forecast = Math.random() > 0.6 ? 'rain' : 'clear';
+    }
 
     return {
-      temperature_f: temp,
-      humidity_percent: season === 'summer' ? 65 : 45,
-      wind_mph: 8,
-      forecast: season === 'winter' ? 'cloudy' : 'clear',
+      temperature_f: Math.max(temp, 0), // Don't go below 0
+      humidity_percent: season === 'summer' ? 65 : season === 'spring' ? 70 : 45,
+      wind_mph: 5 + Math.floor(Math.random() * 10),
+      forecast: forecast,
       season: season
     };
   };
@@ -347,7 +367,7 @@ export default function TrailDetails({ trail: rawTrail, onBack }) {
     else if (timeHours < 8) packSize = "20-30L daypack";
     else if (timeHours < 16) packSize = "40-50L backpack";
     else packSize = "50-70L backpack";
-
+    
     if (trailChar.difficultyRating >= 5) {
       gear.terrainSpecific.push('Trekking poles (essential)', 'Technical hiking boots', 'Emergency bivvy');
       gear.safety.push('GPS with preloaded route', 'Personal Locator Beacon (recommended)');
@@ -449,7 +469,7 @@ export default function TrailDetails({ trail: rawTrail, onBack }) {
     }
     
     if (trailChar.bearCountry) {
-      notes.push("⚠️ BEAR COUNTRY: Carry bear spray. Make noise. Hike in groups");
+      notes.push("🐻 BEAR COUNTRY: Carry bear spray. Make noise. Hike in groups");
     }
     
     notes.push("✓ Always carry the Ten Essentials");
@@ -567,8 +587,9 @@ export default function TrailDetails({ trail: rawTrail, onBack }) {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-sm text-blue-100 mb-1">
-                Current weather conditions for {trail.area_name || trail.location}
+                Weather forecast for {new Date(userInputs.hike_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
               </p>
+              <p className="text-xs text-blue-200 mb-3">{trail.area_name || trail.location}</p>
               <div className="flex items-center gap-4 mb-4">
                 {weatherInputs.forecast === 'clear' && <Sun className="w-16 h-16" />}
                 {weatherInputs.forecast === 'cloudy' && <Cloud className="w-16 h-16" />}
@@ -619,6 +640,19 @@ export default function TrailDetails({ trail: rawTrail, onBack }) {
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Your Information</h3>
               <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <Calendar className="w-4 h-4 inline mr-1" />
+                    Hike Date
+                  </label>
+                  <input
+                    type="date"
+                    value={userInputs.hike_date}
+                    onChange={(e) => setUserInputs({...userInputs, hike_date: e.target.value})}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Weight (lbs)</label>
                   <input
@@ -817,6 +851,9 @@ export default function TrailDetails({ trail: rawTrail, onBack }) {
                   <div>
                     <div className="text-sm text-gray-600">Snack Frequency</div>
                     <div className="text-lg font-semibold text-gray-900">Every {recommendations.calories.snackFrequencyMin} min</div>
+                  </div>
+                  <div className="pt-3 border-t border-gray-200">
+                    <p className="text-xs text-gray-600">💡 Eat {recommendations.calories.caloriesPerHour} cal/hour. Include protein, carbs, and electrolytes</p>
                   </div>
                 </div>
               </div>
