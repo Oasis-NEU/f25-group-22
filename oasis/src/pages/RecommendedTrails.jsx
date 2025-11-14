@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { MapPin, TrendingUp, Clock, Mountain, Star } from "lucide-react";
+import { MapPin, TrendingUp, Clock, Mountain, Star, Search } from "lucide-react";
 import supabase from "../config/supabase";
+import TrailDetails from './TrailDetails';
 
 export default function RecommendedTrails() {
   const [trails, setTrails] = useState([]);
@@ -11,6 +12,9 @@ export default function RecommendedTrails() {
   const [selectedState, setSelectedState] = useState("all");
   const [selectedPopularity, setSelectedPopularity] = useState("all");
   const [selectedActivity, setSelectedActivity] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [selectedTrail, setSelectedTrail] = useState(null);
   const [states, setStates] = useState([]);
   const [activities, setActivities] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
@@ -32,6 +36,19 @@ export default function RecommendedTrails() {
     }, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [selectedDifficulty, selectedLength, selectedState, selectedPopularity, selectedActivity, debouncedSearchTerm]);
 
   useEffect(() => {
     fetchTrails();
@@ -95,11 +112,17 @@ export default function RecommendedTrails() {
           name: trail.name,
           location: `${trail.area_name}, ${trail.state_name}`,
           state: trail.state_name,
+          state_name: trail.state_name,
+          area_name: trail.area_name,
           popularity: trail.popularity || 0,
           activities: parsedActivities,
           difficulty: getDifficultyLabel(trail.difficulty_rating),
+          difficulty_rating: trail.difficulty_rating,
           length: parseFloat(metersToMiles(trail.length)),
           elevation: trail.elevation_gain || 0,
+          elevation_gain: trail.elevation_gain || 0,
+          altitude_ft: trail.elevation_gain || 0,
+          visitor_usage: trail.visitor_usage || 2,
           duration: trail.route_type || "Unknown",
           rating: trail.avg_rating || 0,
           reviews: trail.num_reviews || 0,
@@ -170,19 +193,21 @@ export default function RecommendedTrails() {
     const activityMatch =
       selectedActivity === "all" ||
       (trail.activities && trail.activities.includes(selectedActivity));
-    return (
-      difficultyMatch &&
-      lengthMatch &&
-      stateMatch &&
-      popularityMatch &&
-      activityMatch
-    );
+    const searchMatch =
+      debouncedSearchTerm === "" ||
+      (trail.name || "").toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      (trail.location || "").toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+    return difficultyMatch && lengthMatch && stateMatch && popularityMatch && activityMatch && searchMatch;
   });
 
   const startIndex = currentPage * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedTrails = filteredTrails.slice(startIndex, endIndex);
   const totalPages = Math.ceil(filteredTrails.length / itemsPerPage);
+
+  if (selectedTrail) {
+    return <TrailDetails trail={selectedTrail} onBack={() => setSelectedTrail(null)} />;
+  }
 
   if (loading)
     return (
@@ -228,6 +253,22 @@ export default function RecommendedTrails() {
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-lg font-semibold mb-4">Filter Trails</h2>
           <div className="flex flex-wrap gap-6">
+            {/* Search Bar */}
+            <div className="w-full md:w-auto">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search by Name or Location
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search trails..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent w-full md:w-64"
+                />
+              </div>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Difficulty Level
@@ -408,7 +449,7 @@ export default function RecommendedTrails() {
                 </div>
 
                 {trail.features && (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 mb-4">
                     {trail.features
                       .filter(
                         (feature) =>
@@ -426,6 +467,13 @@ export default function RecommendedTrails() {
                       ))}
                   </div>
                 )}
+
+                <button 
+                  onClick={() => setSelectedTrail(trail)}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors duration-200"
+                >
+                  View Trail Details
+                </button>
               </div>
             </div>
           ))}
