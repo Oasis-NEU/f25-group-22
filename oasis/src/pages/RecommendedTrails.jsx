@@ -1,109 +1,142 @@
 import React, { useState, useEffect } from "react";
 import { MapPin, TrendingUp, Clock, Mountain, Star } from "lucide-react";
-import Papa from "papaparse";
-import TrailDetails from './TrailDetails';
+import supabase from "../config/supabase";
 
 export default function RecommendedTrails() {
-  const [selectedDifficulty, setSelectedDifficulty] = useState("all");
-  const [selectedLength, setSelectedLength] = useState("all");
   const [trails, setTrails] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTrail, setSelectedTrail] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [displayLimit, setDisplayLimit] = useState(20);
-  
+  const [error, setError] = useState(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState("all");
+  const [selectedLength, setSelectedLength] = useState("all");
+  const [selectedState, setSelectedState] = useState("all");
+  const [selectedPopularity, setSelectedPopularity] = useState("all");
+  const [selectedActivity, setSelectedActivity] = useState("all");
+  const [states, setStates] = useState([]);
+  const [activities, setActivities] = useState([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const itemsPerPage = 100;
+
+  const carouselImages = [
+    "https://www.travelandleisure.com/thmb/O9be9O1akR-H0wsuGJW64p6fVbs=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/19-mount-rainier-national-park-washington-BESTHIKE0407-1b2ae69a788f49a996e64ff38f05275a.jpg",
+    "https://www.thprd.org/imagelibrary/images/parks/fctrail.jpg",
+    "https://magazine.northeast.aaa.com/wp-content/uploads/2020/05/walking-trails-near-me-4.jpg?w=640",
+    "https://www.travelandleisure.com/thmb/75m6J3ZRnAMaUacNC_XqN3Vxu8I=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/20-shenandoah-national-park-virginia-BESTHIKE0407-99fb4086ffe44441928bb28a33583dca.jpg",
+    "https://www.travelandleisure.com/thmb/jQN6RAIXdc28jQQcH4ysE2RpSpY=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/TAL-bryce-canyon-BESTHIKE0524-e61d5a062d9040a9bf137c955522b10a.jpg",
+    "https://www.travelandleisure.com/thmb/wPueYjtO7j5q3ED5vMdYQTxVbLw=/750x0/filters:no_upscale():max_bytes(150000):strip_icc():format(webp)/4-zion-national-park-utah-BESTHIKE0407-59e2046c784b4c4b9ff7da56a01361bc.jpg",
+
+  ];
 
   useEffect(() => {
-     fetch('/alltrails-data.csv')
-      .then(response => response.text())
-      .then(csvText => {
-        Papa.parse(csvText, {
-          header: true,
-          dynamicTyping: true,
-          skipEmptyLines: true,
-          complete: (results) => {
-            const transformedTrails = results.data.map((row, index) => ({
-              id: index + 1,
-              name: row.name || 'Unknown Trail',
-              location: `${row.area_name || ''}, ${row.state_name || ''}`.trim(),
-              difficulty: getDifficultyFromRating(row.difficulty_rating),
-              difficulty_rating: row.difficulty_rating || 3,
-              length: row.length ? (row.length / 1609.34).toFixed(1) : 0, // Convert meters to miles
-              elevation: row.elevation_gain ? Math.round(row.elevation_gain * 3.28084) : 0, // Convert meters to feet
-              duration: estimateDuration(row.length, row.elevation_gain),
-              rating: row.avg_rating || 0,
-              reviews: row.num_reviews || 0,
-              image: getTrailImagePath(row.name) || row.profile_photo_url || `https://source.unsplash.com/800x600/?${encodeURIComponent(row.area_name || 'mountain,hiking')},trail,nature`,
-              features: parseFeatures(row.features),
-              area_name: row.area_name || '',
-              state_name: row.state_name || '',
-              visitor_usage: row.visitor_usage || 2,
-              altitude_ft: row.elevation_gain ? Math.round(row.elevation_gain * 3.28084) : 0
-            }));
-            setTrails(transformedTrails);
-            setLoading(false);
-          },
-          error: (error) => {
-            console.error('Error parsing CSV:', error);
-            setLoading(false);
-          }
-        });
-      })
-      .catch(error => {
-        console.error('Error loading CSV:', error);
-        setLoading(false);
-      });
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % carouselImages.length);
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-  const timer = setTimeout(() => {
-    setDebouncedSearchTerm(searchTerm);
-  }, 300);
-  return () => clearTimeout(timer);
-}, [searchTerm]);
+    fetchTrails();
+  }, []);
 
-useEffect(() => {
-  setDisplayLimit(20);
-}, [selectedDifficulty, selectedLength, debouncedSearchTerm]);
-
-  // Helper function to convert difficulty rating (1-7) to Easy/Moderate/Hard
-  const getDifficultyFromRating = (rating) => {
+  const getDifficultyLabel = (rating) => {
     if (rating <= 2) return "Easy";
-    if (rating <= 5) return "Moderate";
+    if (rating <= 3.5) return "Moderate";
     return "Hard";
   };
 
-  // Helper function to estimate duration based on length and elevation
-  const estimateDuration = (lengthMeters, elevationMeters) => {
-    if (!lengthMeters) return "Unknown";
-    const miles = lengthMeters / 1609.34;
-    const elevFeet = elevationMeters ? elevationMeters * 3.28084 : 0;
-    const hours = Math.round((miles / 2) + (elevFeet / 1000));
-    if (hours < 2) return "1-2 hours";
-    if (hours < 4) return `${hours}-${hours + 1} hours`;
-    return `${hours}+ hours`;
+  const metersToMiles = (meters) => {
+    return (meters * 0.000621371).toFixed(1);
   };
 
-  // Helper function to parse features from the CSV format
-  const parseFeatures = (featuresStr) => {
-    if (!featuresStr) return [];
+  const fetchTrails = async () => {
     try {
-      // Remove brackets and quotes, split by comma
-      const cleaned = featuresStr.replace(/[\[\]']/g, '');
-      return cleaned.split(',').slice(0, 3).map(f => 
-        f.trim().replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-      );
-    } catch {
-      return [];
+      setLoading(true);
+      let allTrails = [];
+      let page = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const start = page * pageSize;
+        const end = start + pageSize - 1;
+
+        const { data, error } = await supabase
+          .from("trails")
+          .select("*")
+          .range(start, end);
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          hasMore = false;
+          break;
+        }
+
+        allTrails = [...allTrails, ...data];
+        page++;
+      }
+
+      const transformedTrails = allTrails.map((trail) => {
+        // Parse activities if it's a string
+        let parsedActivities = [];
+        if (typeof trail.activities === 'string') {
+          try {
+            // Remove single quotes and parse as JSON
+            const jsonString = trail.activities.replace(/'/g, '"');
+            parsedActivities = JSON.parse(jsonString);
+          } catch (e) {
+            parsedActivities = [];
+          }
+        } else if (Array.isArray(trail.activities)) {
+          parsedActivities = trail.activities;
+        }
+
+        return {
+          id: trail.trail_id,
+          name: trail.name,
+          location: `${trail.area_name}, ${trail.state_name}`,
+          state: trail.state_name,
+          popularity: trail.popularity || 0,
+          activities: parsedActivities,
+          difficulty: getDifficultyLabel(trail.difficulty_rating),
+          length: parseFloat(metersToMiles(trail.length)),
+          elevation: trail.elevation_gain || 0,
+          duration: trail.route_type || "Unknown",
+          rating: trail.avg_rating || 0,
+          reviews: trail.num_reviews || 0,
+          image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
+          description: `${trail.popularity ? "Popular " : ""}${trail.route_type || "trail"} in ${trail.area_name}`,
+          features: parsedActivities.length > 0 
+            ? parsedActivities 
+            : (trail.features && Array.isArray(trail.features) ? trail.features : [trail.route_type || "Trail"]),
+        };
+      });
+
+      console.log("First trail:", allTrails[0]);
+      console.log("First transformed trail:", transformedTrails[0]);
+
+      setTrails(transformedTrails);
+
+      const uniqueStates = [...new Set(transformedTrails.map(t => t.state))].sort();
+      setStates(uniqueStates);
+
+      // Extract unique activities
+      const allActivities = new Set();
+      transformedTrails.forEach(trail => {
+        if (trail.activities && Array.isArray(trail.activities)) {
+          trail.activities.forEach(activity => allActivities.add(activity));
+        }
+      });
+      const uniqueActivities = [...allActivities].sort();
+      console.log("Activities found:", uniqueActivities);
+      setActivities(uniqueActivities);
+    } catch (err) {
+      setError(err.message);
+      console.error("Error fetching trails:", err);
+    } finally {
+      setLoading(false);
     }
   };
-
-  const getTrailImagePath = (trailName) => {
-    if (!trailName) return null;
-    return `/images/trails/${trailName}.jpg`;
-  };
-
 
   const difficultyColors = {
     Easy: "bg-green-100 text-green-800",
@@ -112,32 +145,43 @@ useEffect(() => {
   };
 
   const filteredTrails = trails.filter((trail) => {
-  const difficultyMatch =
-    selectedDifficulty === "all" || trail.difficulty === selectedDifficulty;
-  const lengthMatch =
-    selectedLength === "all" ||
-    (selectedLength === "short" && trail.length < 4) ||
-    (selectedLength === "medium" && trail.length >= 4 && trail.length <= 7) ||
-    (selectedLength === "long" && trail.length > 7);
-  const searchMatch = 
-    debouncedSearchTerm === "" || 
-    (trail.name || "").toLowerCase().includes(debouncedSearchTerm.toLowerCase());
-  
-  return difficultyMatch && lengthMatch && searchMatch;
+    const difficultyMatch =
+      selectedDifficulty === "all" || trail.difficulty === selectedDifficulty;
+    const lengthMatch =
+      selectedLength === "all" ||
+      (selectedLength === "short" && trail.length < 4) ||
+      (selectedLength === "medium" && trail.length >= 4 && trail.length <= 7) ||
+      (selectedLength === "long" && trail.length > 7);
+    const stateMatch = selectedState === "all" || trail.state === selectedState;
+    const popularityMatch =
+      selectedPopularity === "all" ||
+      (selectedPopularity === "high" && trail.popularity > 20) ||
+      (selectedPopularity === "medium" && trail.popularity >= 10 && trail.popularity <= 20) ||
+      (selectedPopularity === "low" && trail.popularity < 10);
+    const activityMatch =
+      selectedActivity === "all" ||
+      (trail.activities && trail.activities.includes(selectedActivity));
+    return difficultyMatch && lengthMatch && stateMatch && popularityMatch && activityMatch;
   });
-  const displayedTrails = filteredTrails.slice(0, displayLimit);
 
-    if (selectedTrail) {
-    return <TrailDetails trail={selectedTrail} onBack={() => setSelectedTrail(null)} />;
-    }
+  const startIndex = currentPage * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedTrails = filteredTrails.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(filteredTrails.length / itemsPerPage);
 
-  if (loading) {
+  if (loading)
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 pl-16 flex items-center justify-center">
         <div className="text-xl text-gray-600">Loading trails...</div>
       </div>
     );
-  }
+
+  if (error)
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 pl-16 flex items-center justify-center">
+        <div className="text-xl text-red-600">Error: {error}</div>
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 pl-16">
@@ -153,6 +197,15 @@ useEffect(() => {
             beauty, and trail conditions. Find your next adventure!
           </p>
         </div>
+      </div>
+
+      {/* Image Carousel */}
+      <div className="w-full h-110 bg-gray-300 overflow-hidden shadow-lg border-4 border-green-600">
+        <img
+          src={carouselImages[currentImageIndex]}
+          alt="Trail carousel"
+          className="w-full h-full object-cover transition-opacity duration-1000"
+        />
       </div>
 
       {/* Filter Section */}
@@ -191,17 +244,58 @@ useEffect(() => {
               </select>
             </div>
             <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-             Search by Name
-            </label>
-            <input
-              type="text"
-              placeholder="Search trails..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent w-64"
-            />
-</div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                State
+              </label>
+              <select
+                value={selectedState}
+                onChange={(e) => setSelectedState(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="all">All States</option>
+                {states.map((state) => (
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Popularity
+              </label>
+              <select
+                value={selectedPopularity}
+                onChange={(e) => setSelectedPopularity(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="all">All Popularities</option>
+                <option value="high">High (&gt; 20)</option>
+                <option value="medium">Medium (10-20)</option>
+                <option value="low">Low (&lt; 10)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Activity
+              </label>
+              <select
+                value={selectedActivity}
+                onChange={(e) => setSelectedActivity(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="all">All Activities ({activities.length})</option>
+                {activities.length > 0 ? (
+                  activities.map((activity) => (
+                    <option key={activity} value={activity}>
+                      {activity.charAt(0).toUpperCase() + activity.slice(1).replace('-', ' ')}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>No activities found</option>
+                )}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -210,34 +304,31 @@ useEffect(() => {
           <p className="text-gray-600">
             Showing{" "}
             <span className="font-semibold text-gray-900">
+              {startIndex + 1}-{Math.min(endIndex, filteredTrails.length)}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-gray-900">
               {filteredTrails.length}
             </span>{" "}
-            recommended trails
+            trails (Page {currentPage + 1} of {totalPages})
           </p>
         </div>
 
         {/* Trail Cards */}
         <div className="grid md:grid-cols-2 gap-6">
-          {displayedTrails.map((trail) => (
+          {paginatedTrails.map((trail) => (
             <div
               key={trail.id}
               className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
             >
-              <div className="relative h-48">
-                <img
-                  src={trail.image}
-                  alt={trail.name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-4 right-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      difficultyColors[trail.difficulty]
-                    }`}
-                  >
-                    {trail.difficulty}
-                  </span>
-                </div>
+              <div className="relative h-12 bg-gray-200 flex items-center px-4">
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    difficultyColors[trail.difficulty]
+                  }`}
+                >
+                  {trail.difficulty}
+                </span>
               </div>
 
               <div className="p-6">
@@ -250,19 +341,23 @@ useEffect(() => {
                   <span className="text-sm">{trail.location}</span>
                 </div>
 
-                <div className="flex items-center gap-1 mb-4">
-                  <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                  <span className="font-semibold text-gray-900">
-                    {trail.rating}
-                  </span>
-                  <span className="text-gray-600 text-sm">
-                    ({trail.reviews} reviews)
-                  </span>
-                </div>
+                {trail.rating && (
+                  <div className="flex items-center gap-1 mb-4">
+                    <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    <span className="font-semibold text-gray-900">
+                      {trail.rating}
+                    </span>
+                    <span className="text-gray-600 text-sm">
+                      ({trail.reviews} reviews)
+                    </span>
+                  </div>
+                )}
 
-                <p className="text-gray-600 text-sm mb-4">
-                  {trail.description}
-                </p>
+                {trail.description && (
+                  <p className="text-gray-600 text-sm mb-4">
+                    {trail.description}
+                  </p>
+                )}
 
                 <div className="grid grid-cols-3 gap-4 mb-4 py-4 border-y border-gray-200">
                   <div className="text-center">
@@ -294,23 +389,24 @@ useEffect(() => {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {trail.features.map((feature, idx) => (
-                    <span
-                      key={idx}
-                      className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
-                    >
-                      {feature}
-                    </span>
-                  ))}
-                </div>
-
-                <button 
-                  onClick={() => setSelectedTrail(trail)}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors duration-200"
-                  >
-                    View Trail Details
-                </button>
+                {trail.features && (
+                  <div className="flex flex-wrap gap-2">
+                    {trail.features
+                      .filter(feature => 
+                        feature && 
+                        feature.toLowerCase() !== "loop" && 
+                        feature.toLowerCase() !== "out and back"
+                      )
+                      .map((feature, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                      >
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -336,6 +432,29 @@ useEffect(() => {
             <p className="text-gray-600">
               Try adjusting your filters to see more results.
             </p>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {filteredTrails.length > 0 && (
+          <div className="flex items-center justify-center gap-4 mt-8">
+            <button
+              onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+              disabled={currentPage === 0}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              ← Previous
+            </button>
+            <span className="text-gray-600 font-semibold">
+              Page {currentPage + 1} of {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+              disabled={currentPage === totalPages - 1}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              Next →
+            </button>
           </div>
         )}
       </div>
