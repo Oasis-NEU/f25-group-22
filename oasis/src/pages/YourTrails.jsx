@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import React, { useState, useEffect } from "react";
+import supabase from "../config/supabase";
 import {
   Mountain,
   Calendar,
@@ -9,17 +9,8 @@ import {
   Trash2,
   CheckCircle,
   AlertCircle,
+  MapPin,
 } from "lucide-react";
-
-// Initialize Supabase with environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase credentials. Check your .env file.');
-}
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function PlannedTrails() {
   const [plannedHikes, setPlannedHikes] = useState([]);
@@ -28,83 +19,97 @@ export default function PlannedTrails() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log('Component mounted, fetching hikes...');
+    console.log("Component mounted, fetching hikes...");
     fetchPlannedHikes();
   }, []);
+
+  useEffect(() => {
+    console.log(plannedHikes);
+  }, [plannedHikes]);
 
   async function fetchPlannedHikes() {
     try {
       setLoading(true);
       setError(null);
-      
-      console.log('Fetching from Supabase...');
-      console.log('URL:', supabaseUrl);
-      
-      const { data, error } = await supabase
-        .from('planned_hikes')
-        .select('*')
-        .order('created_at', { ascending: false });
 
-      console.log('Supabase response:', { data, error });
+      console.log("Fetching from Supabase...");
+
+      const { data, error } = await supabase
+        .from("planned_hikes")
+        .select(
+          `
+          *,
+          trails (
+            name,
+            area_name,
+            length,
+            elevation_gain,
+            difficulty_rating,
+            avg_rating
+          )
+        `
+        )
+        .order("created_at", { ascending: false });
+
+      console.log("Supabase response:", { data, error });
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error("Supabase error:", error);
         throw error;
       }
 
-      console.log('Successfully fetched hikes:', data);
+      console.log("Successfully fetched hikes:", data);
       setPlannedHikes(data || []);
     } catch (err) {
-      console.error('Error in fetchPlannedHikes:', err);
-      setError(err.message || 'Unknown error occurred');
+      console.error("Error in fetchPlannedHikes:", err);
+      setError(err.message || "Unknown error occurred");
     } finally {
       setLoading(false);
     }
   }
 
   async function handleDelete(id) {
-    if (!confirm('Are you sure you want to delete this hike?')) return;
-    
+    if (!confirm("Are you sure you want to delete this hike?")) return;
+
     try {
       const { error } = await supabase
-        .from('planned_hikes')
+        .from("planned_hikes")
         .delete()
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
 
       setPlannedHikes(plannedHikes.filter((hike) => hike.id !== id));
     } catch (err) {
-      console.error('Error deleting hike:', err);
-      alert('Failed to delete hike: ' + err.message);
+      console.error("Error deleting hike:", err);
+      alert("Failed to delete hike: " + err.message);
     }
   }
 
   async function handleToggleComplete(id) {
     try {
-      const hike = plannedHikes.find(h => h.id === id);
-      const newStatus = hike.status === 'completed' ? 'planned' : 'completed';
+      const hike = plannedHikes.find((h) => h.id === id);
+      const newStatus = hike.status === "completed" ? "planned" : "completed";
       const updates = {
         status: newStatus,
-        completed_at: newStatus === 'completed' ? new Date().toISOString() : null,
+        completed_at:
+          newStatus === "completed" ? new Date().toISOString() : null,
         updated_at: new Date().toISOString(),
       };
 
       const { error } = await supabase
-        .from('planned_hikes')
+        .from("planned_hikes")
         .update(updates)
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
 
       setPlannedHikes(
-        plannedHikes.map((h) =>
-          h.id === id ? { ...h, ...updates } : h
-        )
+        plannedHikes.map((h) => (h.id === id ? { ...h, ...updates } : h))
       );
     } catch (err) {
-      console.error('Error updating hike:', err);
-      alert('Failed to update hike: ' + err.message);
+      console.error("Error updating hike:", err);
+      alert("Failed to update hike: " + err.message);
     }
   }
 
@@ -113,7 +118,7 @@ export default function PlannedTrails() {
   }
 
   function formatDate(dateString) {
-    if (!dateString) return 'Date not set';
+    if (!dateString) return "Date not set";
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString("en-US", {
@@ -127,10 +132,18 @@ export default function PlannedTrails() {
     }
   }
 
-  const upcomingHikes = plannedHikes.filter((hike) => hike.status !== 'completed');
-  const completedHikes = plannedHikes.filter((hike) => hike.status === 'completed');
+  const upcomingHikes = plannedHikes.filter(
+    (hike) => hike.status !== "completed"
+  );
+  const completedHikes = plannedHikes.filter(
+    (hike) => hike.status === "completed"
+  );
 
-  console.log('Render state:', { loading, error, hikesCount: plannedHikes.length });
+  console.log("Render state:", {
+    loading,
+    error,
+    hikesCount: plannedHikes.length,
+  });
 
   if (loading) {
     return (
@@ -151,7 +164,9 @@ export default function PlannedTrails() {
             <div className="flex items-start gap-3">
               <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
               <div className="flex-1">
-                <h3 className="text-red-900 font-semibold mb-2">Error loading hikes</h3>
+                <h3 className="text-red-900 font-semibold mb-2">
+                  Error loading hikes
+                </h3>
                 <p className="text-red-700 mb-3">{error}</p>
                 <div className="bg-red-100 rounded p-3 mb-3 text-sm text-red-800">
                   <p className="font-semibold mb-1">Troubleshooting steps:</p>
@@ -183,13 +198,6 @@ export default function PlannedTrails() {
           <h1 className="text-4xl text-gray-900 mb-2">Your planned trails</h1>
           <p className="text-gray-600">
             Manage your upcoming and completed hikes
-          </p>
-        </div>
-
-        {/* Debug info - remove in production */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-sm">
-          <p className="text-blue-900">
-            Total hikes: {plannedHikes.length} | Upcoming: {upcomingHikes.length} | Completed: {completedHikes.length}
           </p>
         </div>
 
@@ -228,7 +236,7 @@ export default function PlannedTrails() {
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="text-xl text-gray-900">
-                            Trail ID: {hike.trail_id}
+                            {hike.trails?.name || "Trail name unavailable"}
                           </h3>
                           {hike.experience_level && (
                             <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-sm rounded-full capitalize">
@@ -236,12 +244,24 @@ export default function PlannedTrails() {
                             </span>
                           )}
                         </div>
+                        {hike.trails?.area_name && (
+                          <div className="flex items-center gap-2 text-gray-500 mb-2">
+                            <MapPin className="w-4 h-4" />
+                            <span className="text-sm">
+                              {hike.trails.area_name}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2 text-gray-600">
                           <Calendar className="w-4 h-4" />
-                          <span>{formatDate(hike.hike_date || hike.created_at)}</span>
+                          <span>
+                            {formatDate(hike.hike_date || hike.created_at)}
+                          </span>
                         </div>
                         {hike.notes && (
-                          <p className="text-sm text-gray-600 mt-2">{hike.notes}</p>
+                          <p className="text-sm text-gray-600 mt-2">
+                            {hike.notes}
+                          </p>
                         )}
                       </div>
                       <div className="flex gap-2">
@@ -268,23 +288,59 @@ export default function PlannedTrails() {
                       </div>
                     </div>
 
+                    {/* Trail Stats */}
+                    {hike.trails && (
+                      <div className="grid grid-cols-3 gap-4 mb-4">
+                        {hike.trails.length && (
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Mountain className="w-4 h-4" />
+                            <span className="text-sm">
+                              {(hike.trails.length * 0.000621371).toFixed(1)} mi
+                            </span>
+                          </div>
+                        )}
+                        {hike.trails.elevation_gain && (
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Activity className="w-4 h-4" />
+                            <span className="text-sm">
+                              {(hike.trails.elevation_gain * 3.28084).toFixed(
+                                0
+                              )}{" "}
+                              ft
+                            </span>
+                          </div>
+                        )}
+                        {hike.trails.difficulty_rating && (
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <span className="text-sm">
+                              Difficulty: {hike.trails.difficulty_rating}/7
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-3 gap-4">
                       <div className="flex items-center gap-2 text-gray-600">
                         <Users className="w-4 h-4" />
                         <span className="text-sm">
-                          {hike.group_size === 1 ? "Solo" : `${hike.group_size} people`}
+                          {hike.group_size === 1
+                            ? "Solo"
+                            : `${hike.group_size} people`}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-600">
                         <Activity className="w-4 h-4" />
                         <span className="text-sm">
-                          {hike.user_age ? `Age ${hike.user_age}` : 'Age N/A'}
+                          {hike.user_age ? `Age ${hike.user_age}` : "Age N/A"}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-600">
                         <Clock className="w-4 h-4" />
                         <span className="text-sm">
-                          {hike.user_weight_lbs ? `${hike.user_weight_lbs} lbs` : 'Weight N/A'}
+                          {hike.user_weight_lbs
+                            ? `${hike.user_weight_lbs} lbs`
+                            : "Weight N/A"}
                         </span>
                       </div>
                     </div>
@@ -292,71 +348,141 @@ export default function PlannedTrails() {
 
                   {expandedHike === hike.id && (
                     <div className="border-t border-gray-200 p-6 bg-gray-50">
-                      {/* User Info */}
-                      <div className="mb-6">
-                        <h4 className="text-lg text-gray-900 mb-3">Hiker details</h4>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="bg-white rounded-lg p-3 border border-gray-200">
-                            <p className="text-xs text-gray-500 mb-1">Age</p>
-                            <p className="text-lg font-semibold text-gray-900">
-                              {hike.user_age || 'N/A'}
-                            </p>
-                          </div>
-                          <div className="bg-white rounded-lg p-3 border border-gray-200">
-                            <p className="text-xs text-gray-500 mb-1">Height</p>
-                            <p className="text-lg font-semibold text-gray-900">
-                              {hike.user_height_inches ? `${Math.floor(hike.user_height_inches / 12)}'${hike.user_height_inches % 12}"` : 'N/A'}
-                            </p>
-                          </div>
-                          <div className="bg-white rounded-lg p-3 border border-gray-200">
-                            <p className="text-xs text-gray-500 mb-1">Weight</p>
-                            <p className="text-lg font-semibold text-gray-900">
-                              {hike.user_weight_lbs ? `${hike.user_weight_lbs} lbs` : 'N/A'}
-                            </p>
-                          </div>
-                          <div className="bg-white rounded-lg p-3 border border-gray-200">
-                            <p className="text-xs text-gray-500 mb-1">Group</p>
-                            <p className="text-lg font-semibold text-gray-900">
-                              {hike.group_size || 'N/A'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Food Recommendations */}
-                      {hike.recommendations?.food && (
+                      {/* Trail Info */}
+                      {hike.recommendations?.trail_info && (
                         <div className="mb-6">
                           <h4 className="text-lg text-gray-900 mb-3">
-                            Food recommendations
+                            Trail information
                           </h4>
                           <div className="bg-white rounded-lg p-4 border border-gray-200">
-                            {hike.recommendations.food.food_calories && (
-                              <div className="mb-3">
-                                <p className="text-sm text-gray-500 mb-1">Recommended Calories</p>
-                                <p className="text-3xl font-bold text-emerald-600">
-                                  {hike.recommendations.food.food_calories} cal
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">
+                                  Distance
+                                </p>
+                                <p className="text-lg font-semibold text-gray-900">
+                                  {hike.recommendations.trail_info.distance_miles?.toFixed(
+                                    1
+                                  )}{" "}
+                                  mi
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">
+                                  Elevation
+                                </p>
+                                <p className="text-lg font-semibold text-gray-900">
+                                  {hike.recommendations.trail_info.elevation_gain_ft?.toFixed(
+                                    0
+                                  )}{" "}
+                                  ft
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">
+                                  Difficulty
+                                </p>
+                                <p className="text-lg font-semibold text-gray-900">
+                                  {
+                                    hike.recommendations.trail_info
+                                      .difficulty_level
+                                  }
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">
+                                  Time
+                                </p>
+                                <p className="text-lg font-semibold text-gray-900">
+                                  {hike.recommendations.time?.estimated_hours}{" "}
+                                  hrs
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Water & Food */}
+                      {(hike.recommendations?.water ||
+                        hike.recommendations?.food) && (
+                        <div className="mb-6">
+                          <h4 className="text-lg text-gray-900 mb-3">
+                            Water & nutrition
+                          </h4>
+                          <div className="grid grid-cols-2 gap-4">
+                            {hike.recommendations.water && (
+                              <div className="bg-white rounded-lg p-4 border border-gray-200">
+                                <p className="text-sm text-gray-500 mb-1">
+                                  Water needed
+                                </p>
+                                <p className="text-2xl font-bold text-blue-600">
+                                  {hike.recommendations.water.total_liters} L
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  ({hike.recommendations.water.total_ounces} oz)
                                 </p>
                               </div>
                             )}
-                            {hike.recommendations.food.recommendation && (
-                              <p className="text-sm text-gray-600 capitalize">
-                                Type: {hike.recommendations.food.recommendation}
-                              </p>
+                            {hike.recommendations.food && (
+                              <div className="bg-white rounded-lg p-4 border border-gray-200">
+                                <p className="text-sm text-gray-500 mb-1">
+                                  Calories needed
+                                </p>
+                                <p className="text-2xl font-bold text-emerald-600">
+                                  {hike.recommendations.food.food_calories} cal
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {hike.recommendations.food.food_weight_lbs}{" "}
+                                  lbs food
+                                </p>
+                              </div>
                             )}
                           </div>
                         </div>
                       )}
 
-                      {/* Full Recommendations */}
-                      {hike.recommendations && (
+                      {/* Gear */}
+                      {hike.recommendations?.gear && (
+                        <div className="mb-6">
+                          <h4 className="text-lg text-gray-900 mb-3">
+                            Gear recommendations
+                          </h4>
+                          <div className="bg-white rounded-lg p-4 border border-gray-200">
+                            <p className="text-sm text-gray-600 mb-2">
+                              Pack: {hike.recommendations.gear.pack_size}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Estimated weight:{" "}
+                              {
+                                hike.recommendations.gear
+                                  .estimated_pack_weight_lbs
+                              }{" "}
+                              lbs
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Safety Notes */}
+                      {hike.recommendations?.safety_notes && (
                         <div>
                           <h4 className="text-lg text-gray-900 mb-3">
-                            All recommendations
+                            Safety notes
                           </h4>
-                          <div className="bg-white rounded-lg p-4 border border-gray-200 max-h-64 overflow-auto">
-                            <pre className="text-xs text-gray-700 whitespace-pre-wrap">
-                              {JSON.stringify(hike.recommendations, null, 2)}
-                            </pre>
+                          <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                            <ul className="space-y-2">
+                              {hike.recommendations.safety_notes.map(
+                                (note, idx) => (
+                                  <li
+                                    key={idx}
+                                    className="text-sm text-gray-700"
+                                  >
+                                    {note}
+                                  </li>
+                                )
+                              )}
+                            </ul>
                           </div>
                         </div>
                       )}
@@ -390,7 +516,7 @@ export default function PlannedTrails() {
                       <div className="flex items-center gap-3 mb-2">
                         <CheckCircle className="w-5 h-5 text-emerald-600" />
                         <h3 className="text-xl text-gray-900">
-                          Trail ID: {hike.trail_id}
+                          {hike.trails?.name || "Trail name unavailable"}
                         </h3>
                         <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">
                           Completed
@@ -406,7 +532,9 @@ export default function PlannedTrails() {
                         <div className="flex items-center gap-2">
                           <Users className="w-4 h-4" />
                           <span className="text-sm">
-                            {hike.group_size === 1 ? "Solo" : `${hike.group_size} people`}
+                            {hike.group_size === 1
+                              ? "Solo"
+                              : `${hike.group_size} people`}
                           </span>
                         </div>
                       </div>
