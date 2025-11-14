@@ -21,7 +21,7 @@ export default function Sidebar() {
         <div className="flex-none flex items-center justify-start hover:bg-gray-100 rounded-md transition-colors w-full pl-4">
           <img src="/images/navigation.svg" />
           <Link to="/yourtrails" className="block px-4 py-2 text-gray-700">
-            Planned Hikes
+            Planned Trips
           </Link>
         </div>
 
