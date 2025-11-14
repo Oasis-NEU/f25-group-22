@@ -95,7 +95,7 @@ export default function RecommendedTrails() {
       const transformedTrails = allTrails.map((trail) => {
         // Parse activities if it's a string
         let parsedActivities = [];
-        if (typeof trail.activities === 'string') {
+        if (typeof trail.activities === "string") {
           try {
             // Remove single quotes and parse as JSON
             const jsonString = trail.activities.replace(/'/g, '"');
@@ -126,11 +126,17 @@ export default function RecommendedTrails() {
           duration: trail.route_type || "Unknown",
           rating: trail.avg_rating || 0,
           reviews: trail.num_reviews || 0,
-          image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
-          description: `${trail.popularity ? "Popular " : ""}${trail.route_type || "trail"} in ${trail.area_name}`,
-          features: parsedActivities.length > 0 
-            ? parsedActivities 
-            : (trail.features && Array.isArray(trail.features) ? trail.features : [trail.route_type || "Trail"]),
+          image:
+            "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
+          description: `${trail.popularity ? "Popular " : ""}${
+            trail.route_type || "trail"
+          } in ${trail.area_name}`,
+          features:
+            parsedActivities.length > 0
+              ? parsedActivities
+              : trail.features && Array.isArray(trail.features)
+              ? trail.features
+              : [trail.route_type || "Trail"],
         };
       });
 
@@ -139,14 +145,16 @@ export default function RecommendedTrails() {
 
       setTrails(transformedTrails);
 
-      const uniqueStates = [...new Set(transformedTrails.map(t => t.state))].sort();
+      const uniqueStates = [
+        ...new Set(transformedTrails.map((t) => t.state)),
+      ].sort();
       setStates(uniqueStates);
 
       // Extract unique activities
       const allActivities = new Set();
-      transformedTrails.forEach(trail => {
+      transformedTrails.forEach((trail) => {
         if (trail.activities && Array.isArray(trail.activities)) {
-          trail.activities.forEach(activity => allActivities.add(activity));
+          trail.activities.forEach((activity) => allActivities.add(activity));
         }
       });
       const uniqueActivities = [...allActivities].sort();
@@ -178,7 +186,9 @@ export default function RecommendedTrails() {
     const popularityMatch =
       selectedPopularity === "all" ||
       (selectedPopularity === "high" && trail.popularity > 20) ||
-      (selectedPopularity === "medium" && trail.popularity >= 10 && trail.popularity <= 20) ||
+      (selectedPopularity === "medium" &&
+        trail.popularity >= 10 &&
+        trail.popularity <= 20) ||
       (selectedPopularity === "low" && trail.popularity < 10);
     const activityMatch =
       selectedActivity === "all" ||
@@ -330,11 +340,14 @@ export default function RecommendedTrails() {
                 onChange={(e) => setSelectedActivity(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
-                <option value="all">All Activities ({activities.length})</option>
+                <option value="all">
+                  All Activities ({activities.length})
+                </option>
                 {activities.length > 0 ? (
                   activities.map((activity) => (
                     <option key={activity} value={activity}>
-                      {activity.charAt(0).toUpperCase() + activity.slice(1).replace('-', ' ')}
+                      {activity.charAt(0).toUpperCase() +
+                        activity.slice(1).replace("-", " ")}
                     </option>
                   ))
                 ) : (
@@ -438,19 +451,20 @@ export default function RecommendedTrails() {
                 {trail.features && (
                   <div className="flex flex-wrap gap-2 mb-4">
                     {trail.features
-                      .filter(feature => 
-                        feature && 
-                        feature.toLowerCase() !== "loop" && 
-                        feature.toLowerCase() !== "out and back"
+                      .filter(
+                        (feature) =>
+                          feature &&
+                          feature.toLowerCase() !== "loop" &&
+                          feature.toLowerCase() !== "out and back"
                       )
                       .map((feature, idx) => (
-                      <span
-                        key={idx}
-                        className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
-                      >
-                        {feature}
-                      </span>
-                    ))}
+                        <span
+                          key={idx}
+                          className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                        >
+                          {feature}
+                        </span>
+                      ))}
                   </div>
                 )}
 
@@ -492,7 +506,9 @@ export default function RecommendedTrails() {
               Page {currentPage + 1} of {totalPages}
             </span>
             <button
-              onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+              onClick={() =>
+                setCurrentPage(Math.min(totalPages - 1, currentPage + 1))
+              }
               disabled={currentPage === totalPages - 1}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
