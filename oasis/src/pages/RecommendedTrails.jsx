@@ -9,9 +9,12 @@ export default function RecommendedTrails() {
   const [trails, setTrails] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTrail, setSelectedTrail] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [displayLimit, setDisplayLimit] = useState(20);
+  
 
   useEffect(() => {
-    // Import the CSV file
      fetch('/alltrails-data.csv')
       .then(response => response.text())
       .then(csvText => {
@@ -20,7 +23,6 @@ export default function RecommendedTrails() {
           dynamicTyping: true,
           skipEmptyLines: true,
           complete: (results) => {
-            // Transform CSV data to match your component's format
             const transformedTrails = results.data.map((row, index) => ({
               id: index + 1,
               name: row.name || 'Unknown Trail',
@@ -53,6 +55,17 @@ export default function RecommendedTrails() {
         setLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+  const timer = setTimeout(() => {
+    setDebouncedSearchTerm(searchTerm);
+  }, 300);
+  return () => clearTimeout(timer);
+}, [searchTerm]);
+
+useEffect(() => {
+  setDisplayLimit(20);
+}, [selectedDifficulty, selectedLength, debouncedSearchTerm]);
 
   // Helper function to convert difficulty rating (1-7) to Easy/Moderate/Hard
   const getDifficultyFromRating = (rating) => {
@@ -99,15 +112,20 @@ export default function RecommendedTrails() {
   };
 
   const filteredTrails = trails.filter((trail) => {
-    const difficultyMatch =
-      selectedDifficulty === "all" || trail.difficulty === selectedDifficulty;
-    const lengthMatch =
-      selectedLength === "all" ||
-      (selectedLength === "short" && trail.length < 4) ||
-      (selectedLength === "medium" && trail.length >= 4 && trail.length <= 7) ||
-      (selectedLength === "long" && trail.length > 7);
-    return difficultyMatch && lengthMatch;
+  const difficultyMatch =
+    selectedDifficulty === "all" || trail.difficulty === selectedDifficulty;
+  const lengthMatch =
+    selectedLength === "all" ||
+    (selectedLength === "short" && trail.length < 4) ||
+    (selectedLength === "medium" && trail.length >= 4 && trail.length <= 7) ||
+    (selectedLength === "long" && trail.length > 7);
+  const searchMatch = 
+    debouncedSearchTerm === "" || 
+    (trail.name || "").toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+  
+  return difficultyMatch && lengthMatch && searchMatch;
   });
+  const displayedTrails = filteredTrails.slice(0, displayLimit);
 
     if (selectedTrail) {
     return <TrailDetails trail={selectedTrail} onBack={() => setSelectedTrail(null)} />;
@@ -172,6 +190,18 @@ export default function RecommendedTrails() {
                 <option value="long">Long (Over 7 mi)</option>
               </select>
             </div>
+            <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+             Search by Name
+            </label>
+            <input
+              type="text"
+              placeholder="Search trails..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent w-64"
+            />
+</div>
           </div>
         </div>
 
@@ -188,7 +218,7 @@ export default function RecommendedTrails() {
 
         {/* Trail Cards */}
         <div className="grid md:grid-cols-2 gap-6">
-          {filteredTrails.map((trail) => (
+          {displayedTrails.map((trail) => (
             <div
               key={trail.id}
               className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
@@ -285,6 +315,16 @@ export default function RecommendedTrails() {
             </div>
           ))}
         </div>
+        {filteredTrails.length > displayLimit && (
+          <div className="text-center mt-8">
+           <button
+             onClick={() => setDisplayLimit(prev => prev + 20)}
+             className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"
+              >
+              Load More Trails ({filteredTrails.length - displayLimit} remaining)
+            </button>
+          </div>
+)}
 
         {/* Empty State */}
         {filteredTrails.length === 0 && (
