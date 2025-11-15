@@ -17,14 +17,9 @@ import {
   Sun,
   ArrowLeft,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import supabase from "../config/supabase";
 
 export default function TrailDetails({ trail: rawTrail, onBack }) {
-  const navigate = useNavigate();
-  const [savingPlan, setSavingPlan] = useState(false);
-  const [showingRecs, setShowingRecs] = useState(false);
-
+  // If no trail provided, use mock data for preview
   const mockTrail = {
     id: 1,
     name: "Angel's Landing",
@@ -118,56 +113,6 @@ export default function TrailDetails({ trail: rawTrail, onBack }) {
       setWeatherInputs(mockWeather);
       setWeatherLoading(false);
     }, 500);
-  };
-
-  const handlePlanHike = async () => {
-    // Check if user is logged in
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      alert("Please log in to save your hiking plan");
-      navigate("/login"); // Adjust to your login route
-      return;
-    }
-
-    // Check if recommendations have been calculated
-    if (!recommendations) {
-      alert("Please calculate recommendations first");
-      return;
-    }
-
-    setSavingPlan(true);
-
-    try {
-      const { data, error } = await supabase
-        .from("planned_hikes")
-        .insert({
-          user_id: user.id,
-          trail_id: trail.trail_id || trail.id,
-          hike_date: userInputs.hike_date,
-          group_size: 1, // Default to solo, you can add a field for this
-          user_weight_lbs: userInputs.weight_lbs,
-          user_age: userInputs.age,
-          user_height_inches: userInputs.height_inches,
-          experience_level: userInputs.experience,
-          recommendations: recommendations,
-          status: "planned",
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      alert("Hike planned successfully!");
-      navigate("/yourtrails"); // Navigate to planned hikes page
-    } catch (error) {
-      console.error("Error saving plan:", error);
-      alert("Failed to save plan: " + error.message);
-    } finally {
-      setSavingPlan(false);
-    }
   };
 
   const generateMockWeather = (state, area, dateString) => {
@@ -646,7 +591,6 @@ export default function TrailDetails({ trail: rawTrail, onBack }) {
       safety,
     });
     setShowRecommendations(true);
-    setShowRecommendations(true);
   };
 
   const difficultyColors = {
@@ -669,7 +613,7 @@ export default function TrailDetails({ trail: rawTrail, onBack }) {
       )}
 
       {/* Hero Section */}
-      <div className="relative h-64 ml-60">
+      <div className="relative h-64 ml-26">
         <img
           src={trail.image}
           alt={trail.name}
@@ -755,77 +699,6 @@ export default function TrailDetails({ trail: rawTrail, onBack }) {
                   .replace(/\b\w/g, (l) => l.toUpperCase())}
               </span>
             ))}
-          </div>
-        </div>
-
-        {/* Weather Section */}
-        <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-6 text-white mb-8">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <p className="text-sm text-blue-100 mb-1">
-                Weather forecast for{" "}
-                {new Date(userInputs.hike_date).toLocaleDateString("en-US", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </p>
-              <p className="text-xs text-blue-200 mb-3">
-                {trail.area_name || trail.location}
-              </p>
-              <div className="flex items-center gap-4 mb-4">
-                {weatherInputs.forecast === "clear" && (
-                  <Sun className="w-16 h-16" />
-                )}
-                {weatherInputs.forecast === "cloudy" && (
-                  <Cloud className="w-16 h-16" />
-                )}
-                {weatherInputs.forecast === "rain" && (
-                  <CloudRain className="w-16 h-16" />
-                )}
-                {weatherInputs.forecast === "snow" && (
-                  <Cloud className="w-16 h-16" />
-                )}
-                <div>
-                  <p className="text-5xl">{weatherInputs.temperature_f}°</p>
-                  <p className="text-blue-100 capitalize">
-                    {weatherInputs.forecast === "clear"
-                      ? "Mostly sunny"
-                      : weatherInputs.forecast}
-                  </p>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <Droplet className="w-4 h-4" />
-                  <span>
-                    {weatherInputs.forecast === "rain" ? "70%" : "10%"} rain
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Wind className="w-4 h-4" />
-                  <span>{weatherInputs.wind_mph} mph wind</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Droplet className="w-4 h-4" />
-                  <span>{weatherInputs.humidity_percent}% humidity</span>
-                </div>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-blue-100 mb-1">Season</p>
-              <p className="text-2xl capitalize">{weatherInputs.season}</p>
-            </div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-blue-400">
-            <p className="text-sm text-blue-50">
-              {weatherInputs.temperature_f > 85
-                ? "⚠️ Hot conditions - bring extra water and sun protection!"
-                : weatherInputs.temperature_f < 45
-                ? "⚠️ Cold conditions - bring warm layers and insulation!"
-                : "✓ Good hiking conditions! Stay hydrated and prepared."}
-            </p>
           </div>
         </div>
 
@@ -1309,27 +1182,6 @@ export default function TrailDetails({ trail: rawTrail, onBack }) {
               </div>
             </div>
           </>
-        )}
-        {showRecommendations && (
-          <div className="mt-8">
-            <button
-              onClick={handlePlanHike}
-              disabled={savingPlan}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-semibold py-4 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg"
-            >
-              {savingPlan ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Calendar className="w-5 h-5" />
-                  Plan This Hike
-                </>
-              )}
-            </button>
-          </div>
         )}
       </div>
     </div>
