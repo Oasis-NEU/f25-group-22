@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import supabase from "../config/supabase";
 import {
   Mountain,
   ArrowRight,
@@ -9,12 +10,61 @@ import {
 } from "lucide-react";
 
 export default function Dashboard() {
+  const [stats, setStats] = useState({
+    upcomingHikes: 0,
+    completedHikes: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+
+      // Get current user
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      // Fetch all user's planned hikes
+      const { data: hikes, error } = await supabase
+        .from("planned_hikes")
+        .select("status")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      // Count upcoming (planned) and completed hikes
+      const upcoming = hikes.filter((hike) => hike.status === "planned").length;
+      const completed = hikes.filter(
+        (hike) => hike.status === "completed"
+      ).length;
+
+      setStats({
+        upcomingHikes: upcoming,
+        completedHikes: completed,
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen p-24">
       <div className="max-w-4xl ml-8">
         {/* Welcome Section */}
         <div className="mb-6">
-          <h1 className="text-3xl text-gray-900">Welcome back! </h1>
+          <h1 className="text-3xl text-gray-900">Welcome back!</h1>
         </div>
 
         {/* CTA Section */}
@@ -56,7 +106,13 @@ export default function Dashboard() {
               <Calendar className="w-5 h-5 text-gray-600" />
               <p className="text-gray-600 text-sm">Upcoming hikes</p>
             </div>
-            <p className="text-2xl text-gray-900">3</p>
+            {loading ? (
+              <div className="h-8 flex items-center">
+                <div className="animate-pulse bg-gray-200 h-6 w-12 rounded"></div>
+              </div>
+            ) : (
+              <p className="text-2xl text-gray-900">{stats.upcomingHikes}</p>
+            )}
           </div>
 
           <div className="bg-white border border-gray-200 rounded-lg p-5">
@@ -64,35 +120,13 @@ export default function Dashboard() {
               <MapPin className="w-5 h-5 text-gray-600" />
               <p className="text-gray-600 text-sm">Trails explored</p>
             </div>
-            <p className="text-2xl text-gray-900">12</p>
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white border border-gray-200 rounded-lg p-5">
-          <h3 className="text-base text-gray-900 mb-4">Recent activity</h3>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-              <span className="text-gray-700 text-sm flex-1">
-                Completed Mount Tamalpais trail
-              </span>
-              <span className="text-gray-400 text-xs">2 days ago</span>
-            </div>
-            <div className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-gray-700 text-sm flex-1">
-                Saved Yosemite Falls to favorites
-              </span>
-              <span className="text-gray-400 text-xs">5 days ago</span>
-            </div>
-            <div className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
-              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <span className="text-gray-700 text-sm flex-1">
-                Joined Sierra Club meetup
-              </span>
-              <span className="text-gray-400 text-xs">1 week ago</span>
-            </div>
+            {loading ? (
+              <div className="h-8 flex items-center">
+                <div className="animate-pulse bg-gray-200 h-6 w-12 rounded"></div>
+              </div>
+            ) : (
+              <p className="text-2xl text-gray-900">{stats.completedHikes}</p>
+            )}
           </div>
         </div>
       </div>

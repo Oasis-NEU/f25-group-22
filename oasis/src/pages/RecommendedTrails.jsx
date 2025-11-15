@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { MapPin, TrendingUp, Clock, Mountain, Star, Search } from "lucide-react";
+import {
+  MapPin,
+  TrendingUp,
+  Clock,
+  Mountain,
+  Star,
+  Search,
+} from "lucide-react";
 import supabase from "../config/supabase";
-import TrailDetails from './TrailDetails';
+import TrailDetails from "./TrailDetails";
 
 export default function RecommendedTrails() {
   const [trails, setTrails] = useState([]);
@@ -48,7 +55,14 @@ export default function RecommendedTrails() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(0);
-  }, [selectedDifficulty, selectedLength, selectedState, selectedPopularity, selectedActivity, debouncedSearchTerm]);
+  }, [
+    selectedDifficulty,
+    selectedLength,
+    selectedState,
+    selectedPopularity,
+    selectedActivity,
+    debouncedSearchTerm,
+  ]);
 
   useEffect(() => {
     fetchTrails();
@@ -195,9 +209,20 @@ export default function RecommendedTrails() {
       (trail.activities && trail.activities.includes(selectedActivity));
     const searchMatch =
       debouncedSearchTerm === "" ||
-      (trail.name || "").toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-      (trail.location || "").toLowerCase().includes(debouncedSearchTerm.toLowerCase());
-    return difficultyMatch && lengthMatch && stateMatch && popularityMatch && activityMatch && searchMatch;
+      (trail.name || "")
+        .toLowerCase()
+        .includes(debouncedSearchTerm.toLowerCase()) ||
+      (trail.location || "")
+        .toLowerCase()
+        .includes(debouncedSearchTerm.toLowerCase());
+    return (
+      difficultyMatch &&
+      lengthMatch &&
+      stateMatch &&
+      popularityMatch &&
+      activityMatch &&
+      searchMatch
+    );
   });
 
   const startIndex = currentPage * itemsPerPage;
@@ -206,7 +231,12 @@ export default function RecommendedTrails() {
   const totalPages = Math.ceil(filteredTrails.length / itemsPerPage);
 
   if (selectedTrail) {
-    return <TrailDetails trail={selectedTrail} onBack={() => setSelectedTrail(null)} />;
+    return (
+      <TrailDetails
+        trail={selectedTrail}
+        onBack={() => setSelectedTrail(null)}
+      />
+    );
   }
 
   if (loading)
@@ -468,7 +498,7 @@ export default function RecommendedTrails() {
                   </div>
                 )}
 
-                <button 
+                <button
                   onClick={() => setSelectedTrail(trail)}
                   className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors duration-200"
                 >

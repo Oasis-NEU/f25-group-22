@@ -254,9 +254,7 @@ export default function PlannedTrails() {
                         )}
                         <div className="flex items-center gap-2 text-gray-600">
                           <Calendar className="w-4 h-4" />
-                          <span>
-                            {formatDate(hike.hike_date || hike.created_at)}
-                          </span>
+                          <span>{hike.hike_date}</span>
                         </div>
                         {hike.notes && (
                           <p className="text-sm text-gray-600 mt-2">
@@ -526,7 +524,7 @@ export default function PlannedTrails() {
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4" />
                           <span className="text-sm">
-                            {formatDate(hike.completed_at || hike.hike_date)}
+                            {formatDate(hike.completed_at)}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
